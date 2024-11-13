@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="This is a simple website for a restaurant">
+		<link rel="stylesheet" href="/css/styles.css">
+		
+		<title>Document</title>
+	</head>
+	<body>
+		<main class="max-w-sm mx-auto">
+			<h1 class="text-3xl font-bold">Air golf</h1>
+			<canvas class="border bg-blue-50"></canvas>
+		</main>
+	<script>
+
+
+		// 1. Add something on the screen
+		// 2. Add a ball and end goal to the screen
+		// 3. Add gravity to the ball
+		// 4. Add colisions
+		// 5. Add mouse interactions
+		// 6. Add a win condition
+		// golf with one air stroke
+
+
+		let canvas = document.querySelector('canvas');
+		let ctx = canvas.getContext('2d');
+
+		let width = canvas.width = 250;
+		let height = canvas.height = canvas.width * 16/9;
+		canvas.style.height = height + 'px';
+		canvas.style.width = width + 'px';
+
+
+		let goal = {
+			x: 100,
+			y: 100,
+			radius: 20,
+			color: 'red',
+		};
+
+
+		let ball = {
+			x: width / 2,
+			y: height / 2,
+			radius: 10,
+			color: 'white',
+			dx: 2,
+			dy: 2
+		};
+
+		function drawGoal(goal) {
+			ctx.beginPath();
+			ctx.arc(goal.x, goal.y, goal.radius+3, 0, Math.PI * 2);
+			ctx.fillStyle = 'black';
+			ctx.fill();
+			ctx.closePath();
+
+			ctx.beginPath();
+			ctx.arc(goal.x, goal.y, goal.radius, 0, Math.PI * 2);
+			ctx.fillStyle = goal.color;
+			ctx.fill();
+			ctx.closePath();
+		}
+
+		function drawBall(ball) {
+			ctx.beginPath();
+			ctx.arc(ball.x, ball.y, ball.radius+3, 0, Math.PI * 2);
+			ctx.fillStyle = 'black';
+			ctx.fill();
+			ctx.closePath();
+
+			ctx.beginPath();
+			ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+			ctx.fillStyle = ball.color;
+			ctx.fill();
+			ctx.closePath();
+		}
+
+		let angle = 0;
+		let distance = 0;
+
+
+		canvas.addEventListener('click', function() {
+			ball.dx = Math.cos(angle) * distance / 10;
+			ball.dy = Math.sin(angle) * distance / 10;
+		});
+
+		canvas.addEventListener('mousemove', function(e) {
+			let rect = canvas.getBoundingClientRect();
+			let mouseX = e.clientX - rect.left;
+			let mouseY = e.clientY - rect.top;
+
+			// get angle between ball and mouse
+			angle = Math.atan2(mouseY - ball.y, mouseX - ball.x);
+
+			// get distance between ball and mouse
+			distance = Math.sqrt((mouseX - ball.x) ** 2 + (mouseY - ball.y) ** 2);
+		});
+
+		let platforms = [
+			{
+				x: 30,
+				y: 50,
+				width: 100,
+				height: 10
+			},
+			{
+				x: width-50,
+				y: height-100,
+				width: 30,
+				height: 10
+			},
+			{
+				x: 30,
+				y: height-40,
+				width: 80,
+				height: 10
+			},
+			{
+				x: width-100,
+				y: 100,
+				width: 50,
+				height: 10
+			}
+		]
+
+		function drawPlatform(platform) {
+			ctx.beginPath();
+			ctx.rect(platform.x, platform.y, platform.width, platform.height);
+			ctx.fillStyle = 'black';
+			ctx.fill();
+			ctx.closePath();
+		}
+
+
+		drawBall(ball);
+		drawBall(goal);
+		
+		let won = false;
+
+		function update() {
+			if (ball.x + ball.radius > goal.x - goal.radius 
+				&& ball.x - ball.radius < goal.x + goal.radius 
+				&& ball.y + ball.radius > goal.y - goal.radius && ball.y - ball.radius < goal.y + goal.radius) {
+				alert("you win")
+				won = true;
+			}
+
+			ctx.clearRect(0, 0, width, height);
+			ctx.fillStyle = '#00cc00';
+			ctx.fillRect(0, height-30, width, 100);
+
+			drawBall(ball);
+			drawGoal(goal);
+			for (let i = 0; i < platforms.length; i++) {
+				drawPlatform(platforms[i]);
+			}
+
+			let damping = 0.6;
+			let friction = 0.95;
+
+			ball.x += ball.dx;
+			ball.y += ball.dy;
+
+			// add gravity to ball
+			ball.dy += 0.1;
+
+			let hits = platforms.filter(platform => {
+				return ball.x + ball.radius > platform.x && ball.x - ball.radius < platform.x + platform.width && ball.y + ball.radius > platform.y && ball.y - ball.radius < platform.y + platform.height;
+			});
+
+			if (ball.x + ball.radius > width || ball.x - ball.radius < 0 || hits.length > 0) {
+				ball.dx = -ball.dx * damping;
+				// pop ball off the wall
+				ball.x += ball.dx * 2;
+			}
+
+			if (ball.y + ball.radius > height || ball.y - ball.radius < 0 || hits.length > 0) {
+				ball.dy = -ball.dy * damping;
+
+				// add friction to ball
+				ball.dx *= friction;
+
+				// pop ball off the wall
+				ball.y += ball.dy * 2;
+			}
+
+			if (won == false)
+			requestAnimationFrame(update);
+		}
+
+		update()
+
+
+	</script>
+</body>
+</html>
